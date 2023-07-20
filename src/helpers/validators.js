@@ -1,4 +1,5 @@
 import {
+  __,
   allPass,
   equals,
   pipe,
@@ -10,7 +11,18 @@ import {
   filter,
   size,
   gte,
-  __,
+  juxt,
+  apply,
+  uniqWith,
+  uniq,
+  lte,
+  tap,
+  max,
+  countBy,
+  identity,
+  keys,
+  prop,
+  complement,
 } from "lodash/fp";
 
 /**
@@ -39,7 +51,9 @@ const isWhite = (s) => equals(s, white);
 const isGreen = (s) => equals(s, green);
 const isBlue = (s) => equals(s, blue);
 const isOrange = (s) => equals(s, orange);
+
 const isAnyColor = anyPass([isRed, isWhite, isGreen, isBlue, isOrange]);
+const count = (f) => pipe(filter(f), size);
 
 // 1. Красная звезда, зеленый квадрат, все остальные белые.
 export const validateFieldN1 = where({
@@ -53,7 +67,11 @@ export const validateFieldN1 = where({
 export const validateFieldN2 = pipe(values, filter(isGreen), size, gte(__, 2));
 
 // 3. Количество красных фигур равно кол-ву синих.
-export const validateFieldN3 = () => false;
+export const validateFieldN3 = pipe(
+  values,
+  juxt([count(isRed), count(isBlue)]),
+  apply(equals)
+);
 
 // 4. Синий круг, красная звезда, оранжевый квадрат треугольник любого цвета
 export const validateFieldN4 = where({
@@ -64,7 +82,14 @@ export const validateFieldN4 = where({
 });
 
 // 5. Три фигуры одного любого цвета кроме белого (четыре фигуры одного цвета – это тоже true).
-export const validateFieldN5 = () => false;
+export const validateFieldN5 = pipe(
+  values,
+  filter(negate(isWhite)),
+  countBy(identity),
+  values,
+  max,
+  gte(__, 3)
+);
 
 // 6. Ровно две зеленые фигуры (одна из зелёных – это треугольник), плюс одна красная. Четвёртая оставшаяся любого доступного цвета, но не нарушающая первые два условия
 export const validateFieldN6 = () => false;
@@ -84,4 +109,10 @@ export const validateFieldN8 = where({
 export const validateFieldN9 = pipe(values, all(isGreen));
 
 // 10. Треугольник и квадрат одного цвета (не белого), остальные – любого цвета
-export const validateFieldN10 = () => false;
+export const validateFieldN10 = pipe(
+  juxt([prop("triangle"), prop("square")]),
+  allPass([
+    apply(equals),
+    all(negate(isWhite)),
+  ])
+);
