@@ -1,3 +1,18 @@
+import {
+  allPass,
+  equals,
+  pipe,
+  where,
+  anyPass,
+  values,
+  all,
+  negate,
+  filter,
+  size,
+  gte,
+  __,
+} from "lodash/fp";
+
 /**
  * @file Домашка по FP ч. 1
  *
@@ -13,23 +28,40 @@
  * Если какие либо функции написаны руками (без использования библиотек) это не является ошибкой
  */
 
-// 1. Красная звезда, зеленый квадрат, все остальные белые.
-export const validateFieldN1 = ({ star, square, triangle, circle }) => {
-  if (triangle !== "white" || circle !== "white") {
-    return false;
-  }
+const green = "green";
+const red = "red";
+const white = "white";
+const blue = "blue";
+const orange = "orange";
 
-  return star === "red" && square === "green";
-};
+const isRed = (s) => equals(s, red);
+const isWhite = (s) => equals(s, white);
+const isGreen = (s) => equals(s, green);
+const isBlue = (s) => equals(s, blue);
+const isOrange = (s) => equals(s, orange);
+const isAnyColor = anyPass([isRed, isWhite, isGreen, isBlue, isOrange]);
+
+// 1. Красная звезда, зеленый квадрат, все остальные белые.
+export const validateFieldN1 = where({
+  star: isRed,
+  square: isGreen,
+  triangle: isWhite,
+  circle: isWhite,
+});
 
 // 2. Как минимум две фигуры зеленые.
-export const validateFieldN2 = () => false;
+export const validateFieldN2 = pipe(values, filter(isGreen), size, gte(__, 2));
 
 // 3. Количество красных фигур равно кол-ву синих.
 export const validateFieldN3 = () => false;
 
 // 4. Синий круг, красная звезда, оранжевый квадрат треугольник любого цвета
-export const validateFieldN4 = () => false;
+export const validateFieldN4 = where({
+  star: isRed,
+  square: isOrange,
+  triangle: isAnyColor,
+  circle: isBlue,
+});
 
 // 5. Три фигуры одного любого цвета кроме белого (четыре фигуры одного цвета – это тоже true).
 export const validateFieldN5 = () => false;
@@ -38,13 +70,18 @@ export const validateFieldN5 = () => false;
 export const validateFieldN6 = () => false;
 
 // 7. Все фигуры оранжевые.
-export const validateFieldN7 = () => false;
+export const validateFieldN7 = pipe(values, all(isOrange));
 
 // 8. Не красная и не белая звезда, остальные – любого цвета.
-export const validateFieldN8 = () => false;
+export const validateFieldN8 = where({
+  star: allPass([negate(isRed), negate(isWhite)]),
+  square: isAnyColor,
+  triangle: isAnyColor,
+  circle: isAnyColor,
+});
 
 // 9. Все фигуры зеленые.
-export const validateFieldN9 = () => false;
+export const validateFieldN9 = pipe(values, all(isGreen));
 
 // 10. Треугольник и квадрат одного цвета (не белого), остальные – любого цвета
 export const validateFieldN10 = () => false;
