@@ -13,16 +13,10 @@ import {
   gte,
   juxt,
   apply,
-  uniqWith,
-  uniq,
-  lte,
-  tap,
   max,
   countBy,
   identity,
-  keys,
   prop,
-  complement,
 } from "lodash/fp";
 
 /**
@@ -46,14 +40,19 @@ const white = "white";
 const blue = "blue";
 const orange = "orange";
 
+const count = (f) => pipe(filter(f), size);
 const isRed = (s) => equals(s, red);
 const isWhite = (s) => equals(s, white);
 const isGreen = (s) => equals(s, green);
 const isBlue = (s) => equals(s, blue);
 const isOrange = (s) => equals(s, orange);
-
+const isNotWhite = negate(isWhite);
+const isNotRed = negate(isRed);
+const isNotWhiteAndNotRed = allPass([isNotWhite, isNotRed]);
 const isAnyColor = anyPass([isRed, isWhite, isGreen, isBlue, isOrange]);
-const count = (f) => pipe(filter(f), size);
+const isGreenTwoOrMore = pipe(values, count(isGreen), gte(__, 2));
+const isGreenTwice = pipe(values, count(isGreen), equals(__, 2));
+const isRedOnce = pipe(values, count(isRed), equals(__, 1));
 
 // 1. Красная звезда, зеленый квадрат, все остальные белые.
 export const validateFieldN1 = where({
@@ -64,7 +63,7 @@ export const validateFieldN1 = where({
 });
 
 // 2. Как минимум две фигуры зеленые.
-export const validateFieldN2 = pipe(values, filter(isGreen), size, gte(__, 2));
+export const validateFieldN2 = isGreenTwoOrMore;
 
 // 3. Количество красных фигур равно кол-ву синих.
 export const validateFieldN3 = pipe(
@@ -84,7 +83,7 @@ export const validateFieldN4 = where({
 // 5. Три фигуры одного любого цвета кроме белого (четыре фигуры одного цвета – это тоже true).
 export const validateFieldN5 = pipe(
   values,
-  filter(negate(isWhite)),
+  filter(isNotWhite),
   countBy(identity),
   values,
   max,
@@ -93,11 +92,11 @@ export const validateFieldN5 = pipe(
 
 // 6. Ровно две зеленые фигуры (одна из зелёных – это треугольник), плюс одна красная. Четвёртая оставшаяся любого доступного цвета, но не нарушающая первые два условия
 export const validateFieldN6 = allPass([
-  pipe(values, count(isGreen), equals(__, 2)),
+  isGreenTwice,
   where({
     triangle: isGreen,
   }),
-  pipe(values, count(isRed), equals(__, 1)),
+  isRedOnce,
 ]);
 
 // 7. Все фигуры оранжевые.
@@ -105,7 +104,7 @@ export const validateFieldN7 = pipe(values, all(isOrange));
 
 // 8. Не красная и не белая звезда, остальные – любого цвета.
 export const validateFieldN8 = where({
-  star: allPass([negate(isRed), negate(isWhite)]),
+  star: isNotWhiteAndNotRed,
   square: isAnyColor,
   triangle: isAnyColor,
   circle: isAnyColor,
@@ -117,5 +116,5 @@ export const validateFieldN9 = pipe(values, all(isGreen));
 // 10. Треугольник и квадрат одного цвета (не белого), остальные – любого цвета
 export const validateFieldN10 = pipe(
   juxt([prop("triangle"), prop("square")]),
-  allPass([apply(equals), all(negate(isWhite))])
+  allPass([apply(equals), all(isNotWhite)])
 );
