@@ -92,7 +92,13 @@ export const validateFieldN5 = pipe(
 );
 
 // 6. Ровно две зеленые фигуры (одна из зелёных – это треугольник), плюс одна красная. Четвёртая оставшаяся любого доступного цвета, но не нарушающая первые два условия
-export const validateFieldN6 = () => false;
+export const validateFieldN6 = allPass([
+  pipe(values, count(isGreen), equals(__, 2)),
+  where({
+    triangle: isGreen,
+  }),
+  pipe(values, count(isRed), equals(__, 1)),
+]);
 
 // 7. Все фигуры оранжевые.
 export const validateFieldN7 = pipe(values, all(isOrange));
@@ -111,8 +117,5 @@ export const validateFieldN9 = pipe(values, all(isGreen));
 // 10. Треугольник и квадрат одного цвета (не белого), остальные – любого цвета
 export const validateFieldN10 = pipe(
   juxt([prop("triangle"), prop("square")]),
-  allPass([
-    apply(equals),
-    all(negate(isWhite)),
-  ])
+  allPass([apply(equals), all(negate(isWhite))])
 );
