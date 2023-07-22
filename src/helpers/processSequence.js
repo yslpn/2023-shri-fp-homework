@@ -27,6 +27,8 @@ import {
   round,
   curry,
   partial,
+  cond,
+  stubTrue,
 } from "lodash/fp";
 import Api from "../tools/api";
 
@@ -52,8 +54,15 @@ const pow = (a, b) => Math.pow(a, b);
 const square = partial(pow, [2]);
 const mod3 = (number) => number % 3;
 
+// Common helpers
 const andThen = curry((c, f, p) => p.then((r) => f(r)).catch((e) => c(e)));
 const andThenWithCatch = curry((f) => andThen(f));
+const ifElse = curry((p, t, f) =>
+  cond([
+    [p, t],
+    [stubTrue, f],
+  ])
+);
 
 const processSequence = async ({
   value,
@@ -61,7 +70,7 @@ const processSequence = async ({
   handleSuccess,
   handleError,
 }) => {
-  // Helpers
+  // Helpers for processSequence
   const getResult = prop("result");
   const handleValidationError = partial(handleError, ["ValidationError"]);
   const andThenWithCatchHandleError = andThenWithCatch(handleError);
@@ -92,7 +101,13 @@ const processSequence = async ({
     andThenWithCatchHandleError(handleSuccess)
   );
 
-  validateInput(value) ? handleInput(value) : handleValidationError();
+  const handleInputWithValidation = ifElse(
+    validateInput,
+    handleInput,
+    handleValidationError
+  );
+
+  handleInputWithValidation(value);
 };
 
 export default processSequence;
