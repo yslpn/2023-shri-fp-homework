@@ -52,6 +52,9 @@ const pow = (a, b) => Math.pow(a, b);
 const square = partial(pow, [2]);
 const mod3 = (number) => number % 3;
 
+const andThen = curry((c, f, p) => p.then((r) => f(r)).catch((e) => c(e)));
+const andThenWithCatch = curry((f) => andThen(f));
+
 const processSequence = async ({
   value,
   writeLog,
@@ -61,8 +64,7 @@ const processSequence = async ({
   // Helpers
   const getResult = prop("result");
   const handleValidationError = partial(handleError, ["ValidationError"]);
-  const andThen = curry((c, f, p) => p.then((r) => f(r)).catch((e) => c(e)));
-  const andThenWithCatch = andThen(handleError);
+  const andThenWithCatchHandleError = andThenWithCatch(handleError);
   const log = tap(writeLog);
 
   const validateInput = allPass([
@@ -77,17 +79,17 @@ const processSequence = async ({
     round,
     log,
     getBinaryNumber,
-    andThenWithCatch(getResult),
-    andThenWithCatch(log),
-    andThenWithCatch(size),
-    andThenWithCatch(log),
-    andThenWithCatch(square),
-    andThenWithCatch(log),
-    andThenWithCatch(mod3),
-    andThenWithCatch(log),
-    andThenWithCatch(getAnimalNameById),
-    andThenWithCatch(getResult),
-    andThenWithCatch(handleSuccess)
+    andThenWithCatchHandleError(getResult),
+    andThenWithCatchHandleError(log),
+    andThenWithCatchHandleError(size),
+    andThenWithCatchHandleError(log),
+    andThenWithCatchHandleError(square),
+    andThenWithCatchHandleError(log),
+    andThenWithCatchHandleError(mod3),
+    andThenWithCatchHandleError(log),
+    andThenWithCatchHandleError(getAnimalNameById),
+    andThenWithCatchHandleError(getResult),
+    andThenWithCatchHandleError(handleSuccess)
   );
 
   validateInput(value) ? handleInput(value) : handleValidationError();
