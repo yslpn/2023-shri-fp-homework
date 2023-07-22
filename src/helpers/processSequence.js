@@ -14,48 +14,82 @@
  * Иногда промисы от API будут приходить в состояние rejected, (прямо как и API в реальной жизни)
  * Ответ будет приходить в поле {result}
  */
+import {
+  __,
+  allPass,
+  size,
+  pipe,
+  gte,
+  lt,
+  prop,
+  tap,
+  toNumber,
+  round,
+  curry,
+  partial,
+} from "lodash/fp";
 import Api from "../tools/api";
 
+// API
 const api = new Api();
-
-/**
- * Я – пример, удали меня
- */
-const wait = (time) =>
-  new Promise((resolve) => {
-    setTimeout(resolve, time);
+const API_NUMBERS = "https://api.tech/numbers/base";
+const API_ANIMALS = "https://animals.tech/";
+const getBinaryNumber = (number) =>
+  api.get(API_NUMBERS, {
+    from: 10,
+    to: 2,
+    number,
   });
+const getAnimalNameById = (id) => api.get(`${API_ANIMALS}${id}`, {});
 
-const processSequence = ({ value, writeLog, handleSuccess, handleError }) => {
-  /**
-   * Я – пример, удали меня
-   */
-  writeLog(value);
+// Predicates
+const isLengthLessThanTen = pipe(size, lt(__, 10));
+const isLengthGreaterThanTwo = pipe(size, gte(__, 2));
+const isOnlyNumbersAndPositive = pipe(toNumber, gte(__, 0));
 
-  api
-    .get("https://api.tech/numbers/base", {
-      from: 2,
-      to: 10,
-      number: "01011010101",
-    })
-    .then(({ result }) => {
-      writeLog(result);
-    });
+// Math
+const pow = (a, b) => Math.pow(a, b);
+const square = partial(pow, [2]);
+const mod3 = (number) => number % 3;
 
-  wait(2500)
-    .then(() => {
-      writeLog("SecondLog");
+const processSequence = async ({
+  value,
+  writeLog,
+  handleSuccess,
+  handleError,
+}) => {
+  // Helpers
+  const andThen = curry((c, f, p) => p.then((r) => f(r)).catch((e) => c(e)));
+  const andThenWithCatch = andThen(handleError);
+  const log = tap(writeLog);
+  const getResult = prop("result");
 
-      return wait(1500);
-    })
-    .then(() => {
-      writeLog("ThirdLog");
+  const validateInput = allPass([
+    log,
+    isLengthLessThanTen,
+    isLengthGreaterThanTwo,
+    isOnlyNumbersAndPositive,
+  ]);
 
-      return wait(400);
-    })
-    .then(() => {
-      handleSuccess("Done");
-    });
+  const handleInput = pipe(
+    toNumber,
+    round,
+    log,
+    getBinaryNumber,
+    andThenWithCatch(getResult),
+    andThenWithCatch(log),
+    andThenWithCatch(size),
+    andThenWithCatch(log),
+    andThenWithCatch(square),
+    andThenWithCatch(log),
+    andThenWithCatch(mod3),
+    andThenWithCatch(log),
+    andThenWithCatch(getAnimalNameById),
+    andThenWithCatch(getResult),
+    andThenWithCatch(handleSuccess)
+  );
+
+  validateInput(value) ? handleInput(value) : handleError("ValidationError");
 };
 
 export default processSequence;
