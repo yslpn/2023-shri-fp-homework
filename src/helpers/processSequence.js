@@ -56,8 +56,8 @@ const square = partial(pow, [2]);
 const mod3 = (number) => number % 3;
 
 // Common helpers
-const andThen = curry((c, f, p) => p.then((r) => f(r)).catch((e) => c(e)));
-const andThenWithCatch = curry((f) => andThen(f));
+const andThen = curry((f, p) => p.then((r) => f(r)));
+const otherwise = curry((f, p) => p.catch(f));
 const ifElse = curry((p, t, f) =>
   cond([
     [p, t],
@@ -74,7 +74,6 @@ const processSequence = async ({
   // Helpers for processSequence
   const getResult = prop("result");
   const handleValidationError = partial(handleError, ["ValidationError"]);
-  const andThenWithCatchHandleError = andThenWithCatch(handleError);
   const log = tap(writeLog);
 
   const validateInput = allPass([
@@ -88,17 +87,18 @@ const processSequence = async ({
     round,
     log,
     getBinaryNumber,
-    andThenWithCatchHandleError(getResult),
-    andThenWithCatchHandleError(log),
-    andThenWithCatchHandleError(size),
-    andThenWithCatchHandleError(log),
-    andThenWithCatchHandleError(square),
-    andThenWithCatchHandleError(log),
-    andThenWithCatchHandleError(mod3),
-    andThenWithCatchHandleError(log),
-    andThenWithCatchHandleError(getAnimalNameById),
-    andThenWithCatchHandleError(getResult),
-    andThenWithCatchHandleError(handleSuccess)
+    andThen(getResult),
+    andThen(log),
+    andThen(size),
+    andThen(log),
+    andThen(square),
+    andThen(log),
+    andThen(mod3),
+    andThen(log),
+    andThen(getAnimalNameById),
+    andThen(getResult),
+    andThen(handleSuccess),
+    otherwise(handleError)
   );
 
   const handleInputWithValidation = ifElse(
