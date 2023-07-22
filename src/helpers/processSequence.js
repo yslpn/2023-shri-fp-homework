@@ -77,7 +77,6 @@ const processSequence = async ({
   const log = tap(writeLog);
 
   const validateInput = allPass([
-    log,
     isLengthLessThanTen,
     isLengthGreaterThanTwo,
     isOnlyNumbersAndPositive,
@@ -107,7 +106,9 @@ const processSequence = async ({
     handleValidationError
   );
 
-  handleInputWithValidation(value);
+  const runHandleInputWithValidation = pipe(log, handleInputWithValidation);
+
+  runHandleInputWithValidation(value);
 };
 
 export default processSequence;
