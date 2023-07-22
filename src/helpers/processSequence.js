@@ -59,10 +59,11 @@ const processSequence = async ({
   handleError,
 }) => {
   // Helpers
+  const getResult = prop("result");
+  const handleValidationError = partial(handleError, ["ValidationError"]);
   const andThen = curry((c, f, p) => p.then((r) => f(r)).catch((e) => c(e)));
   const andThenWithCatch = andThen(handleError);
   const log = tap(writeLog);
-  const getResult = prop("result");
 
   const validateInput = allPass([
     log,
@@ -89,7 +90,7 @@ const processSequence = async ({
     andThenWithCatch(handleSuccess)
   );
 
-  validateInput(value) ? handleInput(value) : handleError("ValidationError");
+  validateInput(value) ? handleInput(value) : handleValidationError();
 };
 
 export default processSequence;
