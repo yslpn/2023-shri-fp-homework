@@ -29,6 +29,7 @@ import {
   partial,
   cond,
   stubTrue,
+  gt,
 } from "lodash/fp";
 import Api from "../tools/api";
 
@@ -46,7 +47,7 @@ const getAnimalNameById = (id) => api.get(`${API_ANIMALS}${id}`, {});
 
 // Predicates
 const isLengthLessThanTen = pipe(size, lt(__, 10));
-const isLengthGreaterThanTwo = pipe(size, gte(__, 2));
+const isLengthGreaterThanTwo = pipe(size, gt(__, 2));
 const isOnlyNumbersAndPositive = pipe(toNumber, gte(__, 0));
 
 // Math
